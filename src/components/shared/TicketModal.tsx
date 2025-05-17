@@ -8,7 +8,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { TicketInfo } from '@/types';
+import { TicketInfo, CURRENCY } from '@/types';
+import { DollarSign } from 'lucide-react';
 
 interface TicketModalProps {
   ticket: TicketInfo | null;
@@ -97,14 +98,18 @@ export default function TicketModal({ ticket, isOpen, onClose }: TicketModalProp
               
               <Separator />
               
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="font-medium">Costo estimado:</span>
-                <span className="text-parking-primary font-bold">${ticket.estimatedCost.toLocaleString()}</span>
+                <span className="text-parking-primary font-bold flex items-center">
+                  <DollarSign className="h-4 w-4 mr-1" />
+                  {ticket.estimatedCost.toLocaleString()} {CURRENCY.code}
+                </span>
               </div>
               
               <div className="text-center text-xs mt-4 text-muted-foreground">
                 <p>El costo final se calculará al momento de salida</p>
                 <p>basado en el tiempo real de uso.</p>
+                <p className="font-medium mt-1">Precios en {CURRENCY.name}</p>
               </div>
             </div>
           </div>

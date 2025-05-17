@@ -20,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ParkingSpot } from '@/types';
+import { ParkingSpot, CURRENCY } from '@/types';
+import { DollarSign } from 'lucide-react';
 
 const spotSchema = z.object({
   name: z.string().min(1, 'Nombre es requerido'),
@@ -87,9 +88,12 @@ export default function SpotForm({ initialData, onSubmit, onCancel }: SpotFormPr
           name="hourlyRate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tarifa por Hora (COP)</FormLabel>
+              <FormLabel className="flex items-center">
+                Tarifa por Hora ({CURRENCY.name})
+                <DollarSign className="ml-1 h-4 w-4 text-muted-foreground" />
+              </FormLabel>
               <FormControl>
-                <Input type="number" placeholder="5000" {...field} />
+                <Input type="number" placeholder="5.00" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -54,3 +54,10 @@ export interface Income {
   amount: number;
   reservationCount: number;
 }
+
+// Constante para la moneda del sistema
+export const CURRENCY = {
+  code: "USD",
+  symbol: "$",
+  name: "Dólares estadounidenses"
+};

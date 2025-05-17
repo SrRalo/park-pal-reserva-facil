@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Reservation, ParkingSpot } from '@/types';
+import { Reservation, ParkingSpot, CURRENCY } from '@/types';
+import { DollarSign } from 'lucide-react';
 
 interface ReservationCardProps {
   reservation: Reservation;
@@ -108,9 +109,12 @@ export default function ReservationCard({
             </div>
           )}
           {reservation.totalCost !== null && (
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Costo total:</span>
-              <span className="font-medium">${reservation.totalCost.toLocaleString()}</span>
+              <span className="font-medium flex items-center">
+                <DollarSign className="h-4 w-4 mr-1" />
+                {reservation.totalCost.toLocaleString()} {CURRENCY.code}
+              </span>
             </div>
           )}
         </div>

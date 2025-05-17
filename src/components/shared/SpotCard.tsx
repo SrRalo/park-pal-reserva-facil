@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ParkingSpot } from '@/types';
+import { ParkingSpot, CURRENCY } from '@/types';
+import { DollarSign } from 'lucide-react';
 
 interface SpotCardProps {
   spot: ParkingSpot;
@@ -63,9 +64,12 @@ export default function SpotCard({
             <span className="text-muted-foreground">Ubicación:</span>
             <span className="font-medium">{spot.location}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Tarifa:</span>
-            <span className="font-medium">${spot.hourlyRate.toLocaleString()}/hora</span>
+            <span className="font-medium flex items-center">
+              <DollarSign className="h-4 w-4 mr-1" />
+              {spot.hourlyRate.toLocaleString()}/{CURRENCY.code}/hora
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Tipo:</span>

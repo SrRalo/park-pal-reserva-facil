@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ParkingSpot } from '@/types';
+import { ParkingSpot, CURRENCY } from '@/types';
+import { DollarSign } from 'lucide-react';
 
 const reservationSchema = z.object({
   licensePlate: z.string().min(1, 'Placa del vehículo es requerida'),
@@ -26,7 +27,12 @@ type ReservationFormValues = z.infer<typeof reservationSchema>;
 
 interface ReservationFormProps {
   spot: ParkingSpot;
-  onSubmit: (data: ReservationFormValues) => void;
+  onSubmit: (data: {
+    licensePlate: string;
+    estimatedEntryTime: Date;
+    estimatedExitTime: Date;
+    fiscalId?: string;
+  }) => void;
   onCancel: () => void;
 }
 
@@ -87,7 +93,10 @@ export default function ReservationForm({ spot, onSubmit, onCancel }: Reservatio
             <div className="text-muted-foreground">Tipo:</div>
             <div className="font-medium">{spot.type}</div>
             <div className="text-muted-foreground">Tarifa:</div>
-            <div className="font-medium">${spot.hourlyRate.toLocaleString()}/hora</div>
+            <div className="font-medium flex items-center">
+              <DollarSign className="h-4 w-4 mr-1" />
+              {spot.hourlyRate.toLocaleString()} {CURRENCY.code}/hora
+            </div>
           </div>
         </div>
 
@@ -153,12 +162,18 @@ export default function ReservationForm({ spot, onSubmit, onCancel }: Reservatio
         </div>
 
         <div className="bg-gray-100 p-4 rounded-lg">
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <span className="font-medium">Costo Estimado:</span>
-            <span className="font-bold text-parking-primary">${calculateEstimatedCost().toLocaleString()}</span>
+            <span className="font-bold text-parking-primary flex items-center">
+              <DollarSign className="h-4 w-4 mr-1" />
+              {calculateEstimatedCost().toLocaleString()} {CURRENCY.code}
+            </span>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             El costo final se calculará al momento de salida basado en el tiempo real de uso.
+          </p>
+          <p className="text-xs font-medium text-muted-foreground mt-1">
+            Todos los precios están en {CURRENCY.name}.
           </p>
         </div>
 

@@ -1,8 +1,10 @@
 
 import React, { createContext, useState, useContext, ReactNode } from "react";
-import { ParkingSpot, Reservation, Income, ReportFilter, TicketInfo } from "../types";
+import { ParkingSpot, Reservation, Income, ReportFilter, TicketInfo, CURRENCY } from "../types";
 import { parkingSpots as initialSpots, reservations as initialReservations, incomeData } from "../data/mockData";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
+import { DollarSign } from "lucide-react";
 
 interface DataContextType {
   parkingSpots: ParkingSpot[];
@@ -228,9 +230,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // Update spot status
     updateParkingSpot(reservation.spotId, { status: "available" });
     
-    toast({
-      title: "Salida registrada",
-      description: `Monto a pagar: ${cost.toLocaleString()} COP`
+    sonnerToast("Salida registrada", {
+      description: `Monto a pagar: ${CURRENCY.symbol}${cost.toLocaleString()} ${CURRENCY.code}`,
+      icon: <DollarSign className="text-green-500" />
     });
     
     return cost;
