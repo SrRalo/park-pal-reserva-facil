@@ -147,7 +147,7 @@ const ReservadorSearch = () => {
                 <SelectValue placeholder="Tipo de Plaza" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 {spotTypes.map((type) => (
                   <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
