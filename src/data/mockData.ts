@@ -23,7 +23,7 @@ export const parkingSpots: ParkingSpot[] = [
     id: "p1",
     name: "A-01",
     location: "Nivel 1, Zona A",
-    hourlyRate: 5000,
+    hourlyRate: 5,
     type: "Regular",
     status: "available",
     ownerId: "u1"
@@ -32,7 +32,7 @@ export const parkingSpots: ParkingSpot[] = [
     id: "p2",
     name: "A-02",
     location: "Nivel 1, Zona A",
-    hourlyRate: 5000,
+    hourlyRate: 5,
     type: "Regular",
     status: "available",
     ownerId: "u1"
@@ -41,7 +41,7 @@ export const parkingSpots: ParkingSpot[] = [
     id: "p3",
     name: "B-01",
     location: "Nivel 1, Zona B",
-    hourlyRate: 6000,
+    hourlyRate: 6,
     type: "Premium",
     status: "occupied",
     ownerId: "u1"
@@ -50,7 +50,7 @@ export const parkingSpots: ParkingSpot[] = [
     id: "p4",
     name: "B-02",
     location: "Nivel 1, Zona B",
-    hourlyRate: 6000,
+    hourlyRate: 6,
     type: "Premium",
     status: "reserved",
     ownerId: "u1"
@@ -59,7 +59,7 @@ export const parkingSpots: ParkingSpot[] = [
     id: "p5",
     name: "C-01",
     location: "Nivel 2, Zona C",
-    hourlyRate: 4000,
+    hourlyRate: 4,
     type: "Económico",
     status: "available",
     ownerId: "u1"
@@ -110,11 +110,11 @@ export const reservations: Reservation[] = [
 
 // Mock income data for charts
 export const incomeData = [
-  { date: new Date(2023, 4, 1), amount: 250000, reservationCount: 10 },
-  { date: new Date(2023, 4, 2), amount: 320000, reservationCount: 12 },
-  { date: new Date(2023, 4, 3), amount: 180000, reservationCount: 8 },
-  { date: new Date(2023, 4, 4), amount: 420000, reservationCount: 15 },
-  { date: new Date(2023, 4, 5), amount: 350000, reservationCount: 13 },
-  { date: new Date(2023, 4, 6), amount: 280000, reservationCount: 11 },
-  { date: new Date(2023, 4, 7), amount: 390000, reservationCount: 14 }
+  { date: new Date(2023, 4, 1), amount: 25, reservationCount: 10 },
+  { date: new Date(2023, 4, 2), amount: 32, reservationCount: 12 },
+  { date: new Date(2023, 4, 3), amount: 18, reservationCount: 8 },
+  { date: new Date(2023, 4, 4), amount: 42, reservationCount: 15 },
+  { date: new Date(2023, 4, 5), amount: 35, reservationCount: 13 },
+  { date: new Date(2023, 4, 6), amount: 28, reservationCount: 11 },
+  { date: new Date(2023, 4, 7), amount: 39, reservationCount: 14 }
 ];

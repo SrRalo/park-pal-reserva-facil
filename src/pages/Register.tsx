@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -73,6 +72,8 @@ const Register = () => {
       if (success) {
         navigate('/dashboard');
       }
+    } catch (error: any) {
+      console.error('Error during registration:', error);
     } finally {
       setIsLoading(false);
     }

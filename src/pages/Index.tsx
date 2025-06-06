@@ -39,7 +39,7 @@ const Index = () => {
               size="lg" 
               variant="outline" 
               onClick={() => navigate('/register')}
-              className="border-white text-white hover:bg-parking-primary/20"
+              className="bg-parking-primary hover:bg-parking-secondary"
             >
               Registrarse
             </Button>

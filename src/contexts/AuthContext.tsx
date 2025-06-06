@@ -1,8 +1,8 @@
 
-import React, { createContext, useState, useContext, ReactNode } from "react";
-import { User, UserRole } from "../types";
-import { users } from "../data/mockData";
-import { useToast } from "@/hooks/use-toast";
+import { createContext, useContext, useState, ReactNode } from 'react';
+import { authService } from '@/lib/api/auth';
+import { useToast } from '@/components/ui/use-toast';
+import { UserRole } from '@/types';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -14,123 +14,92 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const { toast } = useToast();
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would be an API call
     try {
-      const user = users.find(u => u.email === email);
+      const response = await authService.login(email, password);
       
-      if (!user) {
-        toast({
-          title: "Error de autenticación",
-          description: "Usuario o contraseña incorrectos",
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Simulate a successful login
-      setCurrentUser(user);
-      localStorage.setItem("currentUser", JSON.stringify(user));
+      // Guardar el token y la información del usuario
+      localStorage.setItem('token', response.token);
+      setToken(response.token);
+      setCurrentUser(response.user);
       
       toast({
         title: "Inicio de sesión exitoso",
-        description: `Bienvenido, ${user.name}!`
+        description: `Bienvenido, ${response.user.name}!`,
       });
       
       return true;
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Error al iniciar sesión";
       toast({
-        title: "Error de inicio de sesión",
-        description: "Ha ocurrido un error. Por favor intente nuevamente.",
-        variant: "destructive"
+        title: "Error",
+        description: message,
+        variant: "destructive",
       });
       return false;
     }
   };
-
   const register = async (
-    name: string, 
-    email: string, 
-    password: string, 
+    name: string,
+    email: string,
+    password: string,
     role: UserRole
   ): Promise<boolean> => {
-    // In a real app, this would be an API call
     try {
-      // Check if user already exists
-      if (users.some(u => u.email === email)) {
-        toast({
-          title: "Error de registro",
-          description: "El correo electrónico ya está en uso",
-          variant: "destructive"
-        });
-        return false;
-      }
-      
-      // Create a new user (in a real app, this would be saved to a database)
-      const newUser: User = {
-        id: `u${users.length + 1}`,
+      const response = await authService.register({
         name,
         email,
-        role
-      };
+        password,
+        role,
+      });
       
-      // For this mock example, we can't actually modify the imported array
-      // In a real app, this would add to the database
-      
-      // Simulate successful registration and login
-      setCurrentUser(newUser);
-      localStorage.setItem("currentUser", JSON.stringify(newUser));
+      // Guardar el token y la información del usuario
+      localStorage.setItem('token', response.token);
+      setToken(response.token);
+      setCurrentUser(response.user);
       
       toast({
         title: "Registro exitoso",
-        description: `Bienvenido, ${name}!`
+        description: `Bienvenido, ${name}!`,
       });
       
       return true;
-    } catch (error) {
-      console.error("Registration error:", error);
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Error al registrarse";
       toast({
-        title: "Error de registro",
-        description: "Ha ocurrido un error. Por favor intente nuevamente.",
-        variant: "destructive"
+        title: "Error",
+        description: message,
+        variant: "destructive",
       });
       return false;
     }
   };
-
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("currentUser");
-    toast({
-      title: "Sesión cerrada",
-      description: "Has cerrado sesión correctamente"
-    });
-  };
-
-  // Check for stored user on initial load
-  React.useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-        localStorage.removeItem("currentUser");
-      }
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Error during logout:', error);
+    } finally {
+      localStorage.removeItem('token');
+      setToken(null);
+      setCurrentUser(null);
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión correctamente"
+      });
     }
-  }, []);
-
+  };
   const value = {
     currentUser,
+    token,
     login,
     register,
     logout,
-    isAuthenticated: !!currentUser
+    isAuthenticated: !!token
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
