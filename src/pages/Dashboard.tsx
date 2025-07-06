@@ -1,16 +1,23 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useData } from '@/hooks/useData';
 import MainLayout from '@/components/layout/MainLayout';
+import { ParkingSpot, Reservation } from '@/types';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { currentUser, isAuthenticated } = useAuth();
-  const { parkingSpots, reservations, getUserReservations, getSpotsByOwner, getUserActiveReservationCount } = useData();
+  const { parkingSpots, reservations, getUserReservations, getSpotsByOwner, getUserActiveReservationCount, loading } = useData();
+  
+  // Estados para datos asíncronos
+  const [userSpots, setUserSpots] = useState<ParkingSpot[]>([]);
+  const [userReservations, setUserReservations] = useState<Reservation[]>([]);
+  const [activeReservationCount, setActiveReservationCount] = useState(0);
+  const [dataLoading, setDataLoading] = useState(true);
   
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -18,17 +25,44 @@ const Dashboard = () => {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
+
+  // Calcular roles después del primer useEffect para evitar problemas
+  const isAdmin = currentUser?.role === 'admin';
+  const isRegistrador = currentUser?.role === 'registrador';
+  const isReservador = currentUser?.role === 'reservador';
+  
+  // Admin y registrador tienen acceso a funcionalidades de administración
+  const canManageSpots = isAdmin || isRegistrador;
+
+  // Cargar datos del usuario
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!currentUser) return;
+      
+      setDataLoading(true);
+      try {
+        if (canManageSpots) {
+          const spots = await getSpotsByOwner(currentUser.id);
+          setUserSpots(spots);
+        } else {
+          const reservations = await getUserReservations(currentUser.id);
+          const activeCount = await getUserActiveReservationCount(currentUser.id);
+          setUserReservations(reservations);
+          setActiveReservationCount(activeCount);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [currentUser, getUserReservations, getSpotsByOwner, getUserActiveReservationCount, canManageSpots]);
   
   if (!currentUser) {
     return null; // Don't render anything while checking auth
   }
-  
-  const isRegistrador = currentUser.role === 'registrador';
-  
-  // Get data based on user role
-  const userSpots = isRegistrador ? getSpotsByOwner(currentUser.id) : [];
-  const userReservations = !isRegistrador ? getUserReservations(currentUser.id) : [];
-  const activeReservationCount = !isRegistrador ? getUserActiveReservationCount(currentUser.id) : 0;
   
   // Calculate stats
   const availableSpots = parkingSpots.filter(spot => spot.status === 'available').length;
@@ -45,7 +79,7 @@ const Dashboard = () => {
             Bienvenido, {currentUser.name}
           </h2>
           
-          {isRegistrador ? (
+          {canManageSpots ? (
             <div className="flex flex-wrap gap-2">
               <Button 
                 className="bg-parking-secondary hover:bg-parking-primary"
@@ -60,6 +94,15 @@ const Dashboard = () => {
               >
                 Ver Reportes
               </Button>
+              {isAdmin && (
+                <Button 
+                  variant="outline"
+                  className="border-parking-primary text-parking-primary hover:text-parking-primary"
+                  onClick={() => navigate('/admin/users')}
+                >
+                  Gestión de Usuarios
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -80,119 +123,142 @@ const Dashboard = () => {
           )}
         </div>
         
+        {/* Loading State */}
+        {(loading || dataLoading) && (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-parking-primary"></div>
+            <span className="ml-2 text-parking-primary">Cargando datos...</span>
+          </div>
+        )}
+        
         {/* Stats Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {isRegistrador ? (
-            <>
-              <Card className="border-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Plazas Disponibles</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-parking-success">{availableSpots}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Plazas Ocupadas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-parking-danger">{occupiedSpots}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Plazas Reservadas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-parking-warning">{reservedSpots}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Total Plazas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-parking-primary">{parkingSpots.length}</p>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <>
-              <Card className="border-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Mis Reservaciones Activas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-parking-secondary">{activeReservationCount}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Límite: 3 reservaciones</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Plazas Disponibles</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-parking-success">{availableSpots}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Reservaciones Pendientes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-parking-warning">{pendingReservations}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Reservaciones Activas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-parking-primary">{activeReservations}</p>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
+        {!loading && !dataLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {canManageSpots ? (
+              <>
+                <Card className="border-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Plazas Disponibles</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-parking-success">{availableSpots}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Plazas Ocupadas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-parking-danger">{occupiedSpots}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Plazas Reservadas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-parking-warning">{reservedSpots}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">
+                      {isAdmin ? 'Total Sistema' : 'Mis Plazas'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-parking-primary">{parkingSpots.length}</p>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <>
+                <Card className="border-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Mis Reservaciones Activas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-parking-secondary">{activeReservationCount}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Límite: 3 reservaciones</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Plazas Disponibles</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-parking-success">{availableSpots}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Reservaciones Pendientes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-parking-warning">{pendingReservations}</p>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Reservaciones Activas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-parking-primary">{activeReservations}</p>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
+        )}
         
         {/* Quick Actions Section */}
-        <div className="space-y-6">
-          <h3 className="text-xl font-semibold">Acciones Rápidas</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {isRegistrador ? (
+        {!loading && !dataLoading && (
+          <div className="space-y-6">
+            <h3 className="text-xl font-semibold">Acciones Rápidas</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {canManageSpots ? (
               <>
                 <Card className="border-2 hover:shadow-md transition-all">
                   <CardHeader>
-                    <CardTitle className="text-lg">Administrar Plazas</CardTitle>
+                    <CardTitle className="text-lg">
+                      {isAdmin ? 'Administrar Todo el Sistema' : 'Administrar Mis Plazas'}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-gray-600">
-                      Agregue, modifique o elimine plazas de estacionamiento.
+                      {isAdmin 
+                        ? 'Supervise todas las plazas del sistema y realice ajustes globales.'
+                        : 'Agregue, modifique o elimine plazas de estacionamiento.'
+                      }
                     </p>
                     <Button 
                       className="w-full bg-parking-secondary hover:bg-parking-primary" 
                       onClick={() => navigate('/registrador/spots')}
                     >
-                      Ir a Plazas
+                      {isAdmin ? 'Gestión Global' : 'Ir a Plazas'}
                     </Button>
                   </CardContent>
                 </Card>
                 
                 <Card className="border-2 hover:shadow-md transition-all">
                   <CardHeader>
-                    <CardTitle className="text-lg">Ver Reportes</CardTitle>
+                    <CardTitle className="text-lg">
+                      {isAdmin ? 'Reportes del Sistema' : 'Mis Reportes'}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-gray-600">
-                      Consulte reportes de ingresos generados por sus plazas.
+                      {isAdmin 
+                        ? 'Consulte reportes completos del sistema y estadísticas generales.'
+                        : 'Consulte reportes de ingresos generados por sus plazas.'
+                      }
                     </p>
                     <Button 
                       className="w-full bg-parking-secondary hover:bg-parking-primary" 
@@ -203,9 +269,30 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
                 
+                {isAdmin && (
+                  <Card className="border-2 hover:shadow-md transition-all">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Gestión de Usuarios</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-gray-600">
+                        Administre usuarios, roles y permisos del sistema.
+                      </p>
+                      <Button 
+                        className="w-full bg-parking-primary hover:bg-parking-secondary" 
+                        onClick={() => navigate('/admin/users')}
+                      >
+                        Gestionar Usuarios
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+                
                 <Card className="border-2 hover:shadow-md transition-all">
                   <CardHeader>
-                    <CardTitle className="text-lg">Añadir Nueva Plaza</CardTitle>
+                    <CardTitle className="text-lg">
+                      {isAdmin ? 'Nueva Plaza del Sistema' : 'Añadir Nueva Plaza'}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-gray-600">
@@ -275,6 +362,7 @@ const Dashboard = () => {
             )}
           </div>
         </div>
+        )}
       </div>
     </MainLayout>
   );

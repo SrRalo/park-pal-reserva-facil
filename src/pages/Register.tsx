@@ -28,13 +28,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types';
 
 const registerSchema = z.object({
-  name: z.string().min(1, 'Nombre es requerido'),
-  email: z.string().email('Correo electrónico inválido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  nombre: z.string().min(1, 'Nombre es requerido').max(255, 'Nombre muy largo'),
+  apellido: z.string().max(255, 'Apellido muy largo').optional(),
+  email: z.string().email('Correo electrónico inválido').max(255, 'Correo muy largo'),
+  documento: z.string().min(1, 'Documento es requerido').max(20, 'Documento muy largo'),
+  telefono: z.string().max(20, 'Teléfono muy largo').optional(),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
   confirmPassword: z.string().min(1, 'Confirme su contraseña'),
   role: z.enum(['registrador', 'reservador'] as const),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -52,8 +55,11 @@ const Register = () => {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: '',
+      nombre: '',
+      apellido: '',
       email: '',
+      documento: '',
+      telefono: '',
       password: '',
       confirmPassword: '',
       role: 'reservador',
@@ -63,16 +69,19 @@ const Register = () => {
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     try {
-      const success = await register(
-        data.name,
-        data.email,
-        data.password,
-        data.role as UserRole
-      );
+      const success = await register({
+        nombre: data.nombre,
+        apellido: data.apellido,
+        email: data.email,
+        documento: data.documento,
+        telefono: data.telefono,
+        password: data.password,
+        password_confirmation: data.confirmPassword,
+      });
       if (success) {
         navigate('/dashboard');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error during registration:', error);
     } finally {
       setIsLoading(false);
@@ -99,12 +108,26 @@ const Register = () => {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="nombre"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre Completo</FormLabel>
+                      <FormLabel>Nombre</FormLabel>
                       <FormControl>
-                        <Input placeholder="Juan Pérez" {...field} />
+                        <Input placeholder="Juan" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="apellido"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Apellido (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Pérez" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -123,6 +146,37 @@ const Register = () => {
                           type="email" 
                           {...field} 
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="documento"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Documento</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="12345678" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="telefono"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+1234567890" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

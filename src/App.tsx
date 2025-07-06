@@ -15,6 +15,7 @@ import RegistradorSpotManagement from "./pages/RegistradorSpotManagement";
 import RegistradorReports from "./pages/RegistradorReports";
 import ReservadorSearch from "./pages/ReservadorSearch";
 import ReservadorReservations from "./pages/ReservadorReservations";
+import AdminUsers from "./pages/AdminUsers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/registrador/reports" element={<RegistradorReports />} />
               <Route path="/reservador/search" element={<ReservadorSearch />} />
               <Route path="/reservador/reservations" element={<ReservadorReservations />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

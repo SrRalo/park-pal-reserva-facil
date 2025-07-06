@@ -16,8 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useAuth } from '@/contexts/AuthContext';
-import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useData } from '@/hooks/useData';
 import MainLayout from '@/components/layout/MainLayout';
 import SpotCard from '@/components/shared/SpotCard';
 import ReservationForm from '@/components/forms/ReservationForm';
@@ -89,29 +89,42 @@ const ReservadorSearch = () => {
   });
   
   // Handle reservation submission
-  const handleReserveSpot = (data: any) => {
+  const handleReserveSpot = async (data: {
+    estimatedEntryTime: Date;
+    estimatedExitTime: Date;
+    licensePlate: string;
+  }) => {
     if (!selectedSpot) return;
     
-    // Create reservation with the form data
-    const reservationId = createReservation({
-      userId: currentUser.id,
-      spotId: selectedSpot.id,
-      estimatedEntryTime: data.estimatedEntryTime,
-      estimatedExitTime: data.estimatedExitTime,
-      licensePlate: data.licensePlate
-    });
-    
-    setOpenReserveDialog(false);
-    setSelectedSpot(null);
-    
-    if (reservationId) {
-      toast({
-        title: "Reservación Exitosa",
-        description: "Se ha creado su reservación correctamente"
+    try {
+      // Create reservation with the form data
+      const reservationId = await createReservation({
+        userId: currentUser.id,
+        spotId: selectedSpot.id,
+        estimatedEntryTime: data.estimatedEntryTime,
+        estimatedExitTime: data.estimatedExitTime,
+        licensePlate: data.licensePlate
       });
       
-      // Redirect to reservations page
-      navigate('/reservador/reservations');
+      setOpenReserveDialog(false);
+      setSelectedSpot(null);
+      
+      if (reservationId) {
+        toast({
+          title: "Reservación Exitosa",
+          description: "Se ha creado su reservación correctamente"
+        });
+        
+        // Redirect to reservations page
+        navigate('/reservador/reservations');
+      }
+    } catch (error) {
+      console.error('Error creating reservation:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear la reservación",
+        variant: "destructive"
+      });
     }
   };
   

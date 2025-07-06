@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Tabs,
@@ -8,8 +8,8 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
-import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useData } from '@/hooks/useData';
 import MainLayout from '@/components/layout/MainLayout';
 import ReservationCard from '@/components/shared/ReservationCard';
 import TicketModal from '@/components/shared/TicketModal';
@@ -22,15 +22,18 @@ const ReservadorReservations = () => {
     getUserReservations, 
     parkingSpots, 
     cancelReservation,
-    generateTicket
+    generateTicket,
+    loading 
   } = useData();
   
   const [selectedTab, setSelectedTab] = useState("active");
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [currentTicket, setCurrentTicket] = useState<TicketInfo | null>(null);
+  const [userReservations, setUserReservations] = useState<Reservation[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
   
   // Redirect if not authenticated or not a reservador
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
@@ -40,13 +43,29 @@ const ReservadorReservations = () => {
       navigate('/dashboard');
     }
   }, [isAuthenticated, currentUser, navigate]);
+
+  // Cargar reservaciones del usuario
+  useEffect(() => {
+    const loadUserReservations = async () => {
+      if (!currentUser) return;
+      
+      setDataLoading(true);
+      try {
+        const reservations = await getUserReservations(currentUser.id);
+        setUserReservations(reservations);
+      } catch (error) {
+        console.error('Error loading user reservations:', error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadUserReservations();
+  }, [currentUser, getUserReservations]);
   
   if (!currentUser || currentUser.role !== 'reservador') {
     return null;
   }
-  
-  // Get user's reservations
-  const userReservations = getUserReservations(currentUser.id);
   
   // Filter reservations by status
   const activeReservations = userReservations.filter(
@@ -71,11 +90,27 @@ const ReservadorReservations = () => {
   };
   
   // Handle view ticket
-  const handleViewTicket = (reservationId: string) => {
-    const ticket = generateTicket(reservationId);
-    if (ticket) {
-      setCurrentTicket(ticket);
-      setIsTicketModalOpen(true);
+  const handleViewTicket = async (reservationId: string) => {
+    try {
+      const ticket = await generateTicket(reservationId);
+      if (ticket) {
+        setCurrentTicket(ticket);
+        setIsTicketModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Error generating ticket:', error);
+    }
+  };
+
+  // Handle cancel reservation
+  const handleCancelReservation = async (reservationId: string) => {
+    try {
+      await cancelReservation(reservationId);
+      // Recargar reservaciones
+      const updatedReservations = await getUserReservations(currentUser.id);
+      setUserReservations(updatedReservations);
+    } catch (error) {
+      console.error('Error canceling reservation:', error);
     }
   };
   
@@ -83,24 +118,29 @@ const ReservadorReservations = () => {
     <MainLayout title="Mis Reservaciones" backLink="/dashboard">
       <div className="space-y-6">
         {/* Header section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h2 className="text-2xl font-bold">Mis Reservaciones</h2>
-            <p className="text-gray-600">
-              Administre sus reservaciones activas y vea el historial
-            </p>
-          </div>
-          
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-2xl font-bold">Mis Reservaciones</h2>
           <Button 
             className="bg-parking-secondary hover:bg-parking-primary"
             onClick={() => navigate('/reservador/search')}
           >
-            Buscar Plazas
+            Nueva Reservación
           </Button>
         </div>
-        
-        {/* Tabs */}
-        <Tabs defaultValue="active" value={selectedTab} onValueChange={setSelectedTab}>
+
+        {/* Loading State */}
+        {(loading || dataLoading) && (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-parking-primary"></div>
+            <span className="ml-2 text-parking-primary">Cargando reservaciones...</span>
+          </div>
+        )}
+
+        {/* Content */}
+        {!loading && !dataLoading && (
+          <>
+            {/* Tabs */}
+            <Tabs defaultValue="active" value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto">
             <TabsTrigger value="active">
               Activas ({activeReservations.length})
@@ -167,6 +207,8 @@ const ReservadorReservations = () => {
             )}
           </TabsContent>
         </Tabs>
+        </>
+        )}
       </div>
       
       {/* Ticket Modal */}

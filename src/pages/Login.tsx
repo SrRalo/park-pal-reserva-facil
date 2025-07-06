@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const loginSchema = z.object({
   email: z.string().email('Correo electrónico inválido'),
@@ -111,24 +111,6 @@ const Login = () => {
                   {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                 </Button>
                 
-                {/* Demo accounts for testing */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-sm text-center mb-2 text-muted-foreground">
-                    Para demostración, use:
-                  </p>
-                  <div className="grid grid-cols-2 gap-4 text-xs text-center">
-                    <div className="p-2 border rounded-md bg-gray-50">
-                      <div className="font-bold">Registrador</div>
-                      <div>juan@parksmart.com</div>
-                      <div>cualquier contraseña</div>
-                    </div>
-                    <div className="p-2 border rounded-md bg-gray-50">
-                      <div className="font-bold">Reservador</div>
-                      <div>ana@parksmart.com</div>
-                      <div>cualquier contraseña</div>
-                    </div>
-                  </div>
-                </div>
               </form>
             </Form>
           </CardContent>
