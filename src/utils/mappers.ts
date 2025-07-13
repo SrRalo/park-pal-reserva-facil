@@ -42,36 +42,13 @@ export class DataMapper {
    * Convierte UsuarioReserva (backend) a User (frontend)
    */
   static usuarioReservaToUser(usuarioReserva: UsuarioReserva): User {
-    // Determinar rol basado en el email o algún criterio
-    // Lógica de mapeo mejorada:
-    // - Si el email contiene "admin" o "administrador" -> admin
-    // - Si el email contiene "registrador", "dueño", "owner", "gerente" -> registrador  
-    // - Por defecto -> reservador
-    let role: "admin" | "registrador" | "reservador" = 'reservador';
-    
-    const emailLower = usuarioReserva.email.toLowerCase();
-    
-    // Verificar si es admin
-    if (emailLower.includes('admin') || emailLower.includes('administrador')) {
-      role = 'admin';
-    } 
-    // Verificar si es registrador (propietario de plazas)
-    else if (emailLower.includes('registrador') || 
-             emailLower.includes('dueño') || 
-             emailLower.includes('owner') || 
-             emailLower.includes('gerente') || 
-             emailLower.includes('propietario')) {
-      role = 'registrador';
-    }
-    // Por defecto es reservador
-    
-    console.log(`🔍 Mapeo de rol para ${usuarioReserva.email}: ${role}`);
-    
     return {
       id: usuarioReserva.id.toString(),
-      name: usuarioReserva.nombre,
+      name: usuarioReserva.apellido 
+        ? `${usuarioReserva.nombre} ${usuarioReserva.apellido}` 
+        : usuarioReserva.nombre,
       email: usuarioReserva.email,
-      role: role,
+      role: usuarioReserva.role, // ✅ Usar el campo role directamente desde la BD
     };
   }
 
@@ -113,12 +90,18 @@ export class DataMapper {
       id: ticket.id.toString(),
       userId: ticket.usuario_id.toString(),
       spotId: ticket.estacionamiento_id.toString(),
-      entryTime: new Date(ticket.fecha_entrada),
-      exitTime: ticket.fecha_salida ? new Date(ticket.fecha_salida) : null,
+      // Para reservas activas, entryTime es null hasta que realmente entre
+      entryTime: ticket.estado === 'activo' ? null : new Date(ticket.fecha_entrada),
+      // Para reservas finalizadas, exitTime es la fecha real de salida
+      exitTime: (ticket.estado === 'finalizado' || ticket.estado === 'pagado') && ticket.fecha_salida ? 
+                new Date(ticket.fecha_salida) : null,
+      // Las fechas estimadas son las que el usuario seleccionó inicialmente
       estimatedEntryTime: new Date(ticket.fecha_entrada),
-      estimatedExitTime: ticket.fecha_salida ? new Date(ticket.fecha_salida) : new Date(Date.now() + 2 * 60 * 60 * 1000), // +2 horas por defecto
+      estimatedExitTime: ticket.fecha_salida ? 
+                        new Date(ticket.fecha_salida) : 
+                        new Date(Date.now() + 2 * 60 * 60 * 1000), // +2 horas por defecto si no hay fecha
       status: this.mapTicketStatus(ticket.estado),
-      totalCost: ticket.precio_total || 0,
+      totalCost: ticket.precio_total || null,
       licensePlate: ticket.vehiculo_id,
     };
   }
@@ -196,12 +179,12 @@ export class DataMapper {
    */
   private static mapTicketStatus(backendStatus: BackendTicket['estado']): Reservation['status'] {
     const statusMap: Record<BackendTicket['estado'], Reservation['status']> = {
-      'activo': 'active',
+      'activo': 'pending', // ✅ Cambiado: las reservas activas son "pending" hasta que realmente se inicie
       'finalizado': 'completed',
       'cancelado': 'cancelled',
       'pagado': 'completed', // Pagado se mapea a completed
     };
-    return statusMap[backendStatus] || 'active';
+    return statusMap[backendStatus] || 'pending';
   }
 
   /**

@@ -119,6 +119,13 @@ const Dashboard = () => {
               >
                 Mis Reservaciones
               </Button>
+              <Button 
+                variant="outline"
+                className="border-parking-primary text-parking-primary hover:text-parking-primary"
+                onClick={() => navigate('/reservador/vehicles')}
+              >
+                Mis Vehículos
+              </Button>
             </div>
           )}
         </div>
@@ -225,87 +232,149 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {canManageSpots ? (
               <>
-                <Card className="border-2 hover:shadow-md transition-all">
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      {isAdmin ? 'Administrar Todo el Sistema' : 'Administrar Mis Plazas'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-gray-600">
-                      {isAdmin 
-                        ? 'Supervise todas las plazas del sistema y realice ajustes globales.'
-                        : 'Agregue, modifique o elimine plazas de estacionamiento.'
-                      }
-                    </p>
-                    <Button 
-                      className="w-full bg-parking-secondary hover:bg-parking-primary" 
-                      onClick={() => navigate('/registrador/spots')}
-                    >
-                      {isAdmin ? 'Gestión Global' : 'Ir a Plazas'}
-                    </Button>
-                  </CardContent>
-                </Card>
-                
-                <Card className="border-2 hover:shadow-md transition-all">
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      {isAdmin ? 'Reportes del Sistema' : 'Mis Reportes'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-gray-600">
-                      {isAdmin 
-                        ? 'Consulte reportes completos del sistema y estadísticas generales.'
-                        : 'Consulte reportes de ingresos generados por sus plazas.'
-                      }
-                    </p>
-                    <Button 
-                      className="w-full bg-parking-secondary hover:bg-parking-primary" 
-                      onClick={() => navigate('/registrador/reports')}
-                    >
-                      Ver Reportes
-                    </Button>
-                  </CardContent>
-                </Card>
-                
-                {isAdmin && (
-                  <Card className="border-2 hover:shadow-md transition-all">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Gestión de Usuarios</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-gray-600">
-                        Administre usuarios, roles y permisos del sistema.
-                      </p>
-                      <Button 
-                        className="w-full bg-parking-primary hover:bg-parking-secondary" 
-                        onClick={() => navigate('/admin/users')}
-                      >
-                        Gestionar Usuarios
-                      </Button>
-                    </CardContent>
-                  </Card>
+                {isAdmin ? (
+                  // Admin specific dashboard
+                  <>
+                    <Card className="border-2 hover:shadow-md transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Administrar Plazas</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-gray-600">
+                          Gestión global de todas las plazas del sistema.
+                        </p>
+                        <Button 
+                          className="w-full bg-parking-secondary hover:bg-parking-primary" 
+                          onClick={() => navigate('/admin/plazas')}
+                        >
+                          Gestión Global
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2 hover:shadow-md transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Reportes del Sistema</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-gray-600">
+                          Consulte reportes completos del sistema y estadísticas generales.
+                        </p>
+                        <Button 
+                          className="w-full bg-parking-secondary hover:bg-parking-primary" 
+                          onClick={() => navigate('/admin/reportes')}
+                        >
+                          Ver Reportes
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2 hover:shadow-md transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Nueva Plaza del Sistema</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-gray-600">
+                          Agregue una nueva plaza con sus características y tarifas.
+                        </p>
+                        <Button 
+                          className="w-full bg-parking-secondary hover:bg-parking-primary" 
+                          onClick={() => navigate('/admin/plazas/nueva')}
+                        >
+                          Añadir Plaza
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2 hover:shadow-md transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Gestión de Tickets</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-gray-600">
+                          Administre tickets, finalice reservaciones y gestione reportes.
+                        </p>
+                        <Button 
+                          className="w-full bg-parking-secondary hover:bg-parking-primary" 
+                          onClick={() => navigate('/admin/tickets')}
+                        >
+                          Gestionar Tickets
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2 hover:shadow-md transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Gestión de Usuarios</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-gray-600">
+                          Administre usuarios, roles y permisos del sistema.
+                        </p>
+                        <Button 
+                          className="w-full bg-parking-primary hover:bg-parking-secondary" 
+                          onClick={() => navigate('/admin/users')}
+                        >
+                          Gestionar Usuarios
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  // Registrador dashboard
+                  <>
+                    <Card className="border-2 hover:shadow-md transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Administrar Mis Plazas</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-gray-600">
+                          Agregue, modifique o elimine plazas de estacionamiento.
+                        </p>
+                        <Button 
+                          className="w-full bg-parking-secondary hover:bg-parking-primary" 
+                          onClick={() => navigate('/registrador/spots')}
+                        >
+                          Ir a Plazas
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2 hover:shadow-md transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Mis Reportes</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-gray-600">
+                          Consulte reportes de ingresos generados por sus plazas.
+                        </p>
+                        <Button 
+                          className="w-full bg-parking-secondary hover:bg-parking-primary" 
+                          onClick={() => navigate('/registrador/reports')}
+                        >
+                          Ver Reportes
+                        </Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border-2 hover:shadow-md transition-all">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Añadir Nueva Plaza</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-gray-600">
+                          Agregue una nueva plaza con sus características y tarifas.
+                        </p>
+                        <Button 
+                          className="w-full bg-parking-secondary hover:bg-parking-primary" 
+                          onClick={() => navigate('/registrador/spots')}
+                        >
+                          Añadir Plaza
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </>
                 )}
-                
-                <Card className="border-2 hover:shadow-md transition-all">
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      {isAdmin ? 'Nueva Plaza del Sistema' : 'Añadir Nueva Plaza'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-gray-600">
-                      Agregue una nueva plaza con sus características y tarifas.
-                    </p>
-                    <Button 
-                      className="w-full bg-parking-secondary hover:bg-parking-primary" 
-                      onClick={() => navigate('/registrador/spots')}
-                    >
-                      Añadir Plaza
-                    </Button>
-                  </CardContent>
-                </Card>
               </>
             ) : (
               <>

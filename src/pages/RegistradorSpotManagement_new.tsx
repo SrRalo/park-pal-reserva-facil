@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Pencil, Trash2, MapPin, Clock, DollarSign, Car, Building, Mail } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, MapPin, DollarSign, Car, Building, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +23,7 @@ import EstacionamientoForm from '@/components/forms/EstacionamientoForm';
 import { EstacionamientoAdmin } from '@/types/api';
 import { estacionamientoService } from '@/services/estacionamientoService';
 
-const RegistradorSpotManagement = () => {
+const RegistradorSpotManagementNew = () => {
   const navigate = useNavigate();
   const { currentUser, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -228,12 +228,12 @@ const RegistradorSpotManagement = () => {
                         </div>
                         <div className="flex items-center text-gray-600">
                           <DollarSign className="w-4 h-4 mr-1" />
-                          <span>${estacionamiento.precio_por_hora}/h USD</span>
+                          <span>${estacionamiento.precio_por_hora}/h</span>
                         </div>
                       </div>
                       
                       <div className="text-sm text-gray-600">
-                        <span className="font-medium">Mensual:</span> ${estacionamiento.precio_mensual} USD
+                        <span className="font-medium">Mensual:</span> ${estacionamiento.precio_mensual}
                       </div>
                       
                       <div className="flex gap-2 pt-4">
@@ -351,4 +351,4 @@ const RegistradorSpotManagement = () => {
   );
 };
 
-export default RegistradorSpotManagement;
+export default RegistradorSpotManagementNew;

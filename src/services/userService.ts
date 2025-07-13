@@ -9,6 +9,7 @@ export interface UserData {
   email: string;
   documento: string;
   telefono: string;
+  role: 'admin' | 'registrador' | 'reservador';
   estado: 'activo' | 'inactivo';
   created_at?: string;
   updated_at?: string;
@@ -21,7 +22,7 @@ export interface CreateUserData {
   documento: string;
   telefono: string;
   password: string;
-  role: 'admin' | 'registrador' | 'reservador';
+  role: 'registrador' | 'reservador'; // Solo estos roles desde la aplicación
   estado: 'activo' | 'inactivo';
 }
 
@@ -31,6 +32,7 @@ export interface UpdateUserData {
   email?: string;
   documento?: string;
   telefono?: string;
+  role?: 'admin' | 'registrador' | 'reservador';
   estado?: 'activo' | 'inactivo';
 }
 
@@ -274,6 +276,62 @@ export class UserService {
     }
 
     return errors;
+  }
+
+  /**
+   * Obtener usuarios por rol específico
+   */
+  static async getUsersByRole(role: 'admin' | 'registrador' | 'reservador'): Promise<UserData[]> {
+    try {
+      const response = await apiClient.get<ApiResponse<UserData[]>>(`${this.baseURL}/role/${role}`);
+      
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      
+      throw new Error(response.data.message || 'Error obteniendo usuarios por rol');
+    } catch (error) {
+      console.error('Error obteniendo usuarios por rol:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Actualizar rol de usuario (solo admin)
+   */
+  static async updateUserRole(userId: string, role: 'admin' | 'registrador' | 'reservador'): Promise<UserData> {
+    try {
+      const response = await apiClient.put<ApiResponse<UserData>>(`${this.baseURL}/${userId}/role`, {
+        role
+      });
+      
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      
+      throw new Error(response.data.message || 'Error actualizando rol de usuario');
+    } catch (error) {
+      console.error('Error actualizando rol:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener estadísticas de usuarios por rol
+   */
+  static async getRoleStats(): Promise<UserStats> {
+    try {
+      const response = await apiClient.get<ApiResponse<UserStats>>(`${this.baseURL}/stats/roles`);
+      
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      
+      throw new Error(response.data.message || 'Error obteniendo estadísticas');
+    } catch (error) {
+      console.error('Error obteniendo estadísticas:', error);
+      throw error;
+    }
   }
 }
 

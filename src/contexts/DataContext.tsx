@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
 import { ParkingSpot, Reservation, Income, ReportFilter, TicketInfo, CURRENCY } from "../types";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +8,7 @@ import {
   reservaService, 
   vehiculoService 
 } from "../services";
+import { reportesService } from "../services/reportesService";
 import { DataMapper } from "../utils/mappers";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -30,6 +30,7 @@ interface DataContextType {
   getUserActiveReservationCount: (userId: string) => Promise<number>;
   getIncomeReport: (filter: ReportFilter, ownerId: string) => Promise<Income[]>;
   generateTicket: (reservationId: string) => Promise<TicketInfo | null>;
+  calculateEstimatedCost: (estimatedEntryTime: Date, estimatedExitTime: Date, hourlyRate: number) => number;
   refreshData: () => Promise<void>;
 }
 
@@ -44,6 +45,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { currentUser } = useAuth();
+
+  // Función para calcular costo estimado de manera consistente
+  const calculateEstimatedCost = useCallback((
+    estimatedEntryTime: Date,
+    estimatedExitTime: Date,
+    hourlyRate: number
+  ): number => {
+    // Asegurar que tengamos objetos Date válidos
+    const entryTime = new Date(estimatedEntryTime);
+    const exitTime = new Date(estimatedExitTime);
+    
+    const estimatedHours = 
+      (exitTime.getTime() - entryTime.getTime()) / 
+      (1000 * 60 * 60);
+    
+    const result = Math.ceil(Math.max(1, estimatedHours) * hourlyRate); // Mínimo 1 hora
+    
+    return result;
+  }, []);
 
   // Función para manejar errores
   const handleError = useCallback((error: unknown, defaultMessage: string) => {
@@ -177,12 +197,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       
-      // Verificar límite de reservas activas
+      // Verificar límite de reservas activas (aumentado para permitir más flexibilidad)
       const userActiveCount = await getUserActiveReservationCount(reservationData.userId);
-      if (userActiveCount >= 3) {
+      if (userActiveCount >= 10) { // Aumentado de 3 a 10
         toast({
           title: "Límite de reservaciones",
-          description: "No puedes tener más de 3 reservaciones activas",
+          description: "No puedes tener más de 10 reservaciones activas",
           variant: "destructive"
         });
         return "";
@@ -205,6 +225,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         estacionamiento_id: parseInt(reservationData.spotId),
         vehiculo_id: reservationData.licensePlate, // Placa del vehículo
         tipo_reserva: 'por_horas' as const,
+        fecha_entrada: reservationData.estimatedEntryTime.toISOString(), // ✅ Enviar fecha de entrada estimada
+        fecha_salida_estimada: reservationData.estimatedExitTime.toISOString(), // ✅ Enviar fecha de salida estimada
         horas_estimadas: Math.ceil(
           (reservationData.estimatedExitTime.getTime() - reservationData.estimatedEntryTime.getTime()) / 
           (1000 * 60 * 60)
@@ -422,11 +444,72 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const getIncomeReport = async (filter: ReportFilter, ownerId: string): Promise<Income[]> => {
     try {
-      // TODO: Implementar cuando tengamos el endpoint de reportes
-      // Por ahora retornamos array vacío
-      return [];
+      console.log('Obteniendo reporte de ingresos con filtros:', filter, 'para owner:', ownerId);
+      
+      // Usar el nuevo servicio de reportes que llama al endpoint del backend
+      const incomeData = await reportesService.getIncomeReport(filter, ownerId);
+      
+      console.log('Reporte de ingresos obtenido:', incomeData);
+      return incomeData;
+      
     } catch (err) {
+      console.error('Error al obtener reporte de ingresos:', err);
       handleError(err, "Error al obtener el reporte de ingresos");
+      
+      // Fallback a implementación temporal si el endpoint falla
+      return await getIncomeReportFallback(filter, ownerId);
+    }
+  };
+
+  // Implementación temporal como fallback
+  const getIncomeReportFallback = async (filter: ReportFilter, ownerId: string): Promise<Income[]> => {
+    try {
+      console.log('Usando implementación temporal como fallback');
+      
+      // Obtener todas las reservas del usuario
+      const userReservations = await getUserReservations(ownerId);
+      
+      // Filtrar reservas completadas y pagadas en el rango de fechas
+      const filteredReservations = userReservations.filter(reservation => {
+        if (reservation.status !== 'completed') return false;
+        if (!reservation.totalCost) return false;
+        
+        // Usar estimatedEntryTime para el filtro de fecha si no hay entryTime
+        const reservationDate = reservation.entryTime || reservation.estimatedEntryTime;
+        const date = new Date(reservationDate);
+        
+        return date >= filter.startDate && date <= filter.endDate;
+      });
+      
+      // Agrupar por día
+      const groupedByDay: Record<string, { amount: number; count: number }> = {};
+      
+      filteredReservations.forEach(reservation => {
+        const date = reservation.entryTime || reservation.estimatedEntryTime;
+        const dayKey = new Date(date).toISOString().split('T')[0]; // YYYY-MM-DD
+        
+        if (!groupedByDay[dayKey]) {
+          groupedByDay[dayKey] = { amount: 0, count: 0 };
+        }
+        
+        groupedByDay[dayKey].amount += reservation.totalCost || 0;
+        groupedByDay[dayKey].count += 1;
+      });
+      
+      // Convertir a array de Income
+      const incomeData: Income[] = Object.entries(groupedByDay).map(([dateStr, data]) => ({
+        date: new Date(dateStr),
+        amount: data.amount,
+        reservationCount: data.count
+      }));
+      
+      // Ordenar por fecha
+      incomeData.sort((a, b) => a.date.getTime() - b.date.getTime());
+      
+      return incomeData;
+      
+    } catch (err) {
+      console.error('Error en fallback:', err);
       return [];
     }
   };
@@ -439,12 +522,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const spot = parkingSpots.find(s => s.id === reservation.spotId);
       if (!spot) return null;
       
-      // Calcular costo estimado
-      const estimatedHours = 
-        (reservation.estimatedExitTime.getTime() - reservation.estimatedEntryTime.getTime()) / 
-        (1000 * 60 * 60);
-      
-      const estimatedCost = Math.ceil(estimatedHours * spot.hourlyRate);
+      // Usar función utilitaria para calcular costo estimado
+      const estimatedCost = calculateEstimatedCost(
+        reservation.estimatedEntryTime,
+        reservation.estimatedExitTime,
+        spot.hourlyRate
+      );
       
       return {
         reservationId: reservation.id,
@@ -480,8 +563,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     getUserActiveReservationCount,
     getIncomeReport,
     generateTicket,
+    calculateEstimatedCost,
     refreshData
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
+
+// CORRECION_INCONSISTENCIA_COSTOS_COMPLETADA.md:
+// ✅ Se corrigió la inconsistencia entre ReservationCard y TicketModal
+// ✅ calculateEstimatedCost expuesto en el contexto y usado en ambos componentes
+// ✅ Lógica unificada para cálculo de costos estimados
+// ✅ Etiquetas dinámicas: "Costo total" vs "Costo estimado"

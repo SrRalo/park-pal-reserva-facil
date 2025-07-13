@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Pencil, Trash2, MapPin, Clock, DollarSign, Car, Building, Mail } from 'lucide-react';
+import { Search, Plus, Pencil, Trash2, Car, Hash, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,11 +19,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import MainLayout from '@/components/layout/MainLayout';
-import EstacionamientoForm from '@/components/forms/EstacionamientoForm';
-import { EstacionamientoAdmin } from '@/types/api';
-import { estacionamientoService } from '@/services/estacionamientoService';
+import VehiculoForm from '@/components/forms/VehiculoForm';
+import { Vehiculo } from '@/types/api';
+import { vehiculoService } from '@/services/vehiculoService';
 
-const RegistradorSpotManagement = () => {
+const ReservadorVehicles = () => {
   const navigate = useNavigate();
   const { currentUser, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -32,102 +32,98 @@ const RegistradorSpotManagement = () => {
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [currentEstacionamiento, setCurrentEstacionamiento] = useState<EstacionamientoAdmin | null>(null);
-  const [estacionamientos, setEstacionamientos] = useState<EstacionamientoAdmin[]>([]);
+  const [currentVehiculo, setCurrentVehiculo] = useState<Vehiculo | null>(null);
+  const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   
-  // Redirect if not authenticated or not a registrador
+  // Redirect if not authenticated or not a reservador
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     
-    if (currentUser?.role !== 'registrador') {
+    if (currentUser?.role !== 'reservador') {
       navigate('/dashboard');
       return;
     }
   }, [isAuthenticated, currentUser, navigate]);
 
-  // Cargar estacionamientos
+  // Cargar vehículos del usuario
   useEffect(() => {
-    const loadEstacionamientos = async () => {
+    const loadVehiculos = async () => {
       if (!currentUser) return;
       
       setDataLoading(true);
       try {
-        const data = await estacionamientoService.getAllEstacionamientos();
-        setEstacionamientos(data);
+        const data = await vehiculoService.getVehiculosByUser(parseInt(currentUser.id));
+        setVehiculos(data);
       } catch (error) {
-        console.error('Error loading estacionamientos:', error);
+        console.error('Error loading vehiculos:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Error al cargar los estacionamientos",
+          description: "Error al cargar los vehículos",
         });
       } finally {
         setDataLoading(false);
       }
     };
 
-    loadEstacionamientos();
+    loadVehiculos();
   }, [currentUser, toast]);
   
-  if (!currentUser || currentUser.role !== 'registrador') {
+  if (!currentUser || currentUser.role !== 'reservador') {
     return null;
   }
   
-  // Filter estacionamientos based on search term
-  const filteredEstacionamientos = estacionamientos.filter(estacionamiento => 
-    estacionamiento.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    estacionamiento.direccion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    estacionamiento.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter vehiculos based on search term
+  const filteredVehiculos = vehiculos.filter(vehiculo => 
+    vehiculo.placa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    vehiculo.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    vehiculo.color.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  // Sort estacionamientos by name
-  const sortedEstacionamientos = [...filteredEstacionamientos].sort((a, b) => a.nombre.localeCompare(b.nombre));
+  // Sort vehiculos by placa
+  const sortedVehiculos = [...filteredVehiculos].sort((a, b) => a.placa.localeCompare(b.placa));
   
   // Handle success after add/edit
-  const handleSuccess = async (estacionamiento: EstacionamientoAdmin) => {
+  const handleSuccess = async (vehiculo: Vehiculo) => {
     setOpenAddDialog(false);
     setOpenEditDialog(false);
-    setCurrentEstacionamiento(null);
+    setCurrentVehiculo(null);
     
-    // Recargar estacionamientos
+    // Recargar vehículos
     try {
-      const data = await estacionamientoService.getAllEstacionamientos();
-      setEstacionamientos(data);
-      toast({
-        title: "Éxito",
-        description: "Operación completada exitosamente",
-      });
+      const data = await vehiculoService.getVehiculosByUser(parseInt(currentUser.id));
+      setVehiculos(data);
     } catch (error) {
-      console.error('Error reloading estacionamientos:', error);
+      console.error('Error reloading vehiculos:', error);
     }
   };
   
-  // Handle deleting an estacionamiento
-  const handleDeleteEstacionamiento = async () => {
-    if (currentEstacionamiento) {
+  // Handle deleting a vehiculo
+  const handleDeleteVehiculo = async () => {
+    if (currentVehiculo) {
       try {
-        await estacionamientoService.deleteEstacionamiento(currentEstacionamiento.id!);
+        await vehiculoService.deleteVehiculo(currentVehiculo.placa);
         setOpenDeleteDialog(false);
-        setCurrentEstacionamiento(null);
+        setCurrentVehiculo(null);
         
-        // Recargar estacionamientos
-        const data = await estacionamientoService.getAllEstacionamientos();
-        setEstacionamientos(data);
+        // Recargar vehículos
+        const data = await vehiculoService.getVehiculosByUser(parseInt(currentUser.id));
+        setVehiculos(data);
         
         toast({
           title: "Éxito",
-          description: "Estacionamiento eliminado correctamente",
+          description: "Vehículo eliminado correctamente",
         });
       } catch (error) {
-        console.error('Error deleting estacionamiento:', error);
+        console.error('Error deleting vehiculo:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Error al eliminar el estacionamiento",
+          description: "Error al eliminar el vehículo",
         });
       }
     }
@@ -145,14 +141,14 @@ const RegistradorSpotManagement = () => {
   };
 
   return (
-    <MainLayout title="Administrar Plazas" backLink="/dashboard">
+    <MainLayout title="Mis Vehículos" backLink="/dashboard">
       <div className="space-y-6">
         {/* Header section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-bold">Plazas de Estacionamiento</h2>
+            <h2 className="text-2xl font-bold">Mis Vehículos</h2>
             <p className="text-gray-600">
-              Administre sus plazas de estacionamiento disponibles
+              Gestiona los vehículos que puedes usar para reservar plazas
             </p>
           </div>
           
@@ -162,7 +158,7 @@ const RegistradorSpotManagement = () => {
             disabled={dataLoading}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Agregar Nueva Plaza
+            Registrar Vehículo
           </Button>
         </div>
 
@@ -170,7 +166,7 @@ const RegistradorSpotManagement = () => {
         {dataLoading && (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-parking-primary"></div>
-            <span className="ml-2 text-parking-primary">Cargando plazas...</span>
+            <span className="ml-2 text-parking-primary">Cargando vehículos...</span>
           </div>
         )}
 
@@ -182,7 +178,7 @@ const RegistradorSpotManagement = () => {
               <div className="relative flex-grow max-w-md">
                 <Input
                   type="text"
-                  placeholder="Buscar estacionamientos..."
+                  placeholder="Buscar por placa, modelo o color..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -191,49 +187,38 @@ const RegistradorSpotManagement = () => {
               </div>
               
               <div className="text-sm text-gray-600">
-                {sortedEstacionamientos.length} estacionamiento{sortedEstacionamientos.length !== 1 ? 's' : ''} encontrado{sortedEstacionamientos.length !== 1 ? 's' : ''}
+                {sortedVehiculos.length} vehículo{sortedVehiculos.length !== 1 ? 's' : ''} encontrado{sortedVehiculos.length !== 1 ? 's' : ''}
               </div>
             </div>
 
-            {/* Estacionamientos grid */}
-            {sortedEstacionamientos.length > 0 ? (
+            {/* Vehiculos grid */}
+            {sortedVehiculos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sortedEstacionamientos.map((estacionamiento) => (
-                  <Card key={estacionamiento.id} className="hover:shadow-lg transition-shadow">
+                {sortedVehiculos.map((vehiculo) => (
+                  <Card key={vehiculo.placa} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="text-lg flex items-center space-x-2">
-                            <Building className="h-5 w-5 text-parking-primary" />
-                            <span>{estacionamiento.nombre}</span>
+                            <Car className="h-5 w-5 text-parking-primary" />
+                            <span>{vehiculo.placa}</span>
                           </CardTitle>
                           <p className="text-sm text-gray-600 mt-1 flex items-center space-x-1">
-                            <Mail className="h-4 w-4" />
-                            <span>{estacionamiento.email}</span>
+                            <Hash className="h-4 w-4" />
+                            <span>{vehiculo.modelo}</span>
                           </p>
                         </div>
-                        {getStatusBadge(estacionamiento.estado)}
+                        {getStatusBadge(vehiculo.estado)}
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        <span className="line-clamp-2">{estacionamiento.direccion}</span>
+                        <Palette className="w-4 h-4 mr-2" />
+                        <span>{vehiculo.color}</span>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="flex items-center text-gray-600">
-                          <Car className="w-4 h-4 mr-1" />
-                          <span>{estacionamiento.espacios_disponibles}/{estacionamiento.espacios_totales}</span>
-                        </div>
-                        <div className="flex items-center text-gray-600">
-                          <DollarSign className="w-4 h-4 mr-1" />
-                          <span>${estacionamiento.precio_por_hora}/h USD</span>
-                        </div>
-                      </div>
-                      
-                      <div className="text-sm text-gray-600">
-                        <span className="font-medium">Mensual:</span> ${estacionamiento.precio_mensual} USD
+                      <div className="text-xs text-gray-500">
+                        <span>Registrado: {new Date(vehiculo.created_at).toLocaleDateString()}</span>
                       </div>
                       
                       <div className="flex gap-2 pt-4">
@@ -241,7 +226,7 @@ const RegistradorSpotManagement = () => {
                           size="sm" 
                           variant="outline"
                           onClick={() => {
-                            setCurrentEstacionamiento(estacionamiento);
+                            setCurrentVehiculo(vehiculo);
                             setOpenEditDialog(true);
                           }}
                           className="flex-1"
@@ -253,7 +238,7 @@ const RegistradorSpotManagement = () => {
                           size="sm" 
                           variant="destructive"
                           onClick={() => {
-                            setCurrentEstacionamiento(estacionamiento);
+                            setCurrentVehiculo(vehiculo);
                             setOpenDeleteDialog(true);
                           }}
                           className="flex-1"
@@ -269,15 +254,15 @@ const RegistradorSpotManagement = () => {
             ) : (
               <div className="text-center py-12">
                 <div className="text-gray-400 mb-4">
-                  <Building className="w-16 h-16 mx-auto" />
+                  <Car className="w-16 h-16 mx-auto" />
                 </div>
                 <h3 className="text-xl font-medium text-gray-600 mb-2">
-                  {searchTerm ? 'No se encontraron estacionamientos' : 'No tienes estacionamientos registrados'}
+                  {searchTerm ? 'No se encontraron vehículos' : 'No tienes vehículos registrados'}
                 </h3>
                 <p className="text-gray-500 mb-6">
                   {searchTerm 
                     ? 'Intenta con términos de búsqueda diferentes' 
-                    : 'Comienza agregando tu primer estacionamiento'
+                    : 'Registra tu primer vehículo para poder hacer reservas'
                   }
                 </p>
                 {!searchTerm && (
@@ -286,7 +271,7 @@ const RegistradorSpotManagement = () => {
                     className="bg-parking-secondary hover:bg-parking-primary"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Agregar Primer Estacionamiento
+                    Registrar Primer Vehículo
                   </Button>
                 )}
               </div>
@@ -295,33 +280,35 @@ const RegistradorSpotManagement = () => {
         )}
       </div>
 
-      {/* Add Estacionamiento Dialog */}
+      {/* Add Vehiculo Dialog */}
       <Dialog open={openAddDialog} onOpenChange={setOpenAddDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Agregar Nueva Plaza de Estacionamiento</DialogTitle>
+            <DialogTitle>Registrar Nuevo Vehículo</DialogTitle>
           </DialogHeader>
-          <EstacionamientoForm
+          <VehiculoForm
             mode="create"
+            userId={parseInt(currentUser.id)}
             onSuccess={handleSuccess}
             onCancel={() => setOpenAddDialog(false)}
           />
         </DialogContent>
       </Dialog>
 
-      {/* Edit Estacionamiento Dialog */}
+      {/* Edit Vehiculo Dialog */}
       <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Editar Plaza de Estacionamiento</DialogTitle>
+            <DialogTitle>Editar Vehículo</DialogTitle>
           </DialogHeader>
-          <EstacionamientoForm
+          <VehiculoForm
             mode="edit"
-            initialData={currentEstacionamiento || undefined}
+            userId={parseInt(currentUser.id)}
+            initialData={currentVehiculo || undefined}
             onSuccess={handleSuccess}
             onCancel={() => {
               setOpenEditDialog(false);
-              setCurrentEstacionamiento(null);
+              setCurrentVehiculo(null);
             }}
           />
         </DialogContent>
@@ -333,14 +320,14 @@ const RegistradorSpotManagement = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. El estacionamiento "{currentEstacionamiento?.nombre}" será eliminado permanentemente.
+              Esta acción no se puede deshacer. El vehículo "{currentVehiculo?.placa}" será eliminado permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               className="bg-destructive hover:bg-destructive/90"
-              onClick={handleDeleteEstacionamiento}
+              onClick={handleDeleteVehiculo}
             >
               Eliminar
             </AlertDialogAction>
@@ -351,4 +338,4 @@ const RegistradorSpotManagement = () => {
   );
 };
 
-export default RegistradorSpotManagement;
+export default ReservadorVehicles;

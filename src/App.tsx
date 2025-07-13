@@ -15,7 +15,12 @@ import RegistradorSpotManagement from "./pages/RegistradorSpotManagement";
 import RegistradorReports from "./pages/RegistradorReports";
 import ReservadorSearch from "./pages/ReservadorSearch";
 import ReservadorReservations from "./pages/ReservadorReservations";
+import ReservadorVehicles from "./pages/ReservadorVehicles";
 import AdminUsers from "./pages/AdminUsers";
+import AdminPlazas from "./pages/AdminPlazas";
+import AdminReportes from "./pages/AdminReportes";
+import AdminTickets from "./pages/AdminTickets";
+import AdminNuevaPlaza from "./pages/AdminNuevaPlaza";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,7 +42,12 @@ const App = () => (
               <Route path="/registrador/reports" element={<RegistradorReports />} />
               <Route path="/reservador/search" element={<ReservadorSearch />} />
               <Route path="/reservador/reservations" element={<ReservadorReservations />} />
+              <Route path="/reservador/vehicles" element={<ReservadorVehicles />} />
               <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/plazas" element={<AdminPlazas />} />
+              <Route path="/admin/plazas/nueva" element={<AdminNuevaPlaza />} />
+              <Route path="/admin/reportes" element={<AdminReportes />} />
+              <Route path="/admin/tickets" element={<AdminTickets />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

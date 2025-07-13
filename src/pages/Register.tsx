@@ -77,6 +77,7 @@ const Register = () => {
         telefono: data.telefono,
         password: data.password,
         password_confirmation: data.confirmPassword,
+        role: data.role, // ✅ Incluir el rol seleccionado
       });
       if (success) {
         navigate('/dashboard');
@@ -235,8 +236,8 @@ const Register = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="registrador">Administrador (Registrador)</SelectItem>
-                          <SelectItem value="reservador">Cliente (Reservador)</SelectItem>
+                          <SelectItem value="reservador">Reservador - Cliente del sistema</SelectItem>
+                          <SelectItem value="registrador">Registrador - Propietario de estacionamiento</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

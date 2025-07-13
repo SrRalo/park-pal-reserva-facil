@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Reservation, ParkingSpot, CURRENCY } from '@/types';
 import { DollarSign } from 'lucide-react';
+import { useData } from '@/hooks/useData';
 
 interface ReservationCardProps {
   reservation: Reservation;
@@ -23,6 +24,8 @@ export default function ReservationCard({
   onRegisterExit,
   onViewTicket
 }: ReservationCardProps) {
+  const { calculateEstimatedCost } = useData();
+  
   const formatDate = (date: Date | null) => {
     if (!date) return 'No registrado';
     return new Date(date).toLocaleString('es-ES', {
@@ -33,6 +36,15 @@ export default function ReservationCard({
       minute: '2-digit'
     });
   };
+
+  // Calcular el costo a mostrar (total si existe, estimado si no)
+  const displayCost = reservation.totalCost || calculateEstimatedCost(
+    reservation.estimatedEntryTime,
+    reservation.estimatedExitTime,
+    spot.hourlyRate
+  );
+
+  const costLabel = reservation.totalCost ? 'Costo total:' : 'Costo estimado:';
 
   const getStatusColor = () => {
     switch (reservation.status) {
@@ -108,12 +120,12 @@ export default function ReservationCard({
               <span className="font-medium">{formatDate(reservation.exitTime)}</span>
             </div>
           )}
-          {reservation.totalCost !== null && (
+          {(reservation.totalCost !== null || reservation.status === 'pending' || reservation.status === 'active') && (
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Costo total:</span>
+              <span className="text-muted-foreground">{costLabel}</span>
               <span className="font-medium flex items-center">
                 <DollarSign className="h-4 w-4 mr-1" />
-                {reservation.totalCost.toLocaleString()} {CURRENCY.code}
+                {displayCost.toLocaleString()} {CURRENCY.code}
               </span>
             </div>
           )}

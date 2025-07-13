@@ -48,6 +48,7 @@ export interface UsuarioReserva {
   email: string;
   documento: string;
   telefono?: string;
+  role: 'admin' | 'registrador' | 'reservador';
   estado: 'activo' | 'inactivo';
   ultimo_acceso?: string;
   created_at: string;
@@ -69,12 +70,11 @@ export interface EstacionamientoAdmin {
 }
 
 export interface Vehiculo {
-  id: number;
-  placa: string;
+  placa: string; // Primary key
   usuario_id: number;
-  tipo: 'carro' | 'moto' | 'bicicleta';
-  modelo?: string;
-  color?: string;
+  modelo: string;
+  color: string;
+  estado: 'activo' | 'inactivo';
   created_at: string;
   updated_at: string;
 }
@@ -146,6 +146,7 @@ export interface RegisterRequest {
   telefono?: string;
   password: string;
   password_confirmation: string;
+  role?: 'registrador' | 'reservador'; // Solo estos roles desde registro
 }
 
 export interface CreateReservaRequest {
@@ -153,6 +154,8 @@ export interface CreateReservaRequest {
   vehiculo_id: string; // placa
   estacionamiento_id: number;
   tipo_reserva: 'por_horas' | 'mensual';
+  fecha_entrada?: string; // ✅ Fecha de entrada estimada
+  fecha_salida_estimada?: string; // ✅ Fecha de salida estimada
   horas_estimadas?: number;
   dias_estimados?: number;
 }
