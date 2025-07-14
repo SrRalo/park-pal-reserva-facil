@@ -126,7 +126,7 @@ class AdminTicketService {
    */
   async finalizeTicket(ticketId: number): Promise<boolean> {
     try {
-      const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/finalize`, {
+      const response = await fetch(`${API_BASE_URL}/test-tickets/${ticketId}/finalize`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ class AdminTicketService {
         throw new Error(`Error en la respuesta del servidor: ${response.status}`);
       }
 
-      const data: TicketUpdateResponse = await response.json();
+      const data = await response.json();
       
       if (!data.success) {
         throw new Error(data.message || 'Error al finalizar el ticket');
@@ -258,16 +258,14 @@ class AdminTicketService {
    */
   async reportTicket(ticketId: number, reason: string): Promise<boolean> {
     try {
-      // Por ahora, cambiar el estado a cancelado y agregar observaciones
-      const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
-        method: 'PUT',
+      const response = await fetch(`${API_BASE_URL}/test-tickets/${ticketId}/report`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          estado: 'cancelado',
-          observaciones: `REPORTADO: ${reason}`
+          reason: reason
         })
       });
 
@@ -275,7 +273,7 @@ class AdminTicketService {
         throw new Error(`Error en la respuesta del servidor: ${response.status}`);
       }
 
-      const data: TicketUpdateResponse = await response.json();
+      const data = await response.json();
       
       if (!data.success) {
         throw new Error(data.message || 'Error al reportar el ticket');
