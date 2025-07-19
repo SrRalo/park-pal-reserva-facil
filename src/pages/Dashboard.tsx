@@ -78,56 +78,6 @@ const Dashboard = () => {
           <h2 className="text-2xl font-bold">
             Bienvenido, {currentUser.name}
           </h2>
-          
-          {canManageSpots ? (
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                className="bg-parking-secondary hover:bg-parking-primary"
-                onClick={() => navigate('/registrador/spots')}
-              >
-                Administrar Plazas
-              </Button>
-              <Button 
-                variant="outline"
-                className="border-parking-secondary text-parking-secondary hover:text-parking-secondary"
-                onClick={() => navigate('/registrador/reports')}
-              >
-                Ver Reportes
-              </Button>
-              {isAdmin && (
-                <Button 
-                  variant="outline"
-                  className="border-parking-primary text-parking-primary hover:text-parking-primary"
-                  onClick={() => navigate('/admin/users')}
-                >
-                  Gestión de Usuarios
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                className="bg-parking-secondary hover:bg-parking-primary"
-                onClick={() => navigate('/reservador/search')}
-              >
-                Buscar Plazas
-              </Button>
-              <Button 
-                variant="outline"
-                className="border-parking-secondary text-parking-secondary hover:text-parking-secondary"
-                onClick={() => navigate('/reservador/reservations')}
-              >
-                Mis Reservaciones
-              </Button>
-              <Button 
-                variant="outline"
-                className="border-parking-primary text-parking-primary hover:text-parking-primary"
-                onClick={() => navigate('/reservador/vehicles')}
-              >
-                Mis Vehículos
-              </Button>
-            </div>
-          )}
         </div>
         
         {/* Loading State */}

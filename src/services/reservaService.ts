@@ -183,6 +183,24 @@ export class ReservaService {
       throw new Error('Error procesando reembolso');
     }
   }
+
+  /**
+   * Obtener todos los tickets del sistema (solo para admin)
+   */
+  async getAllTickets(): Promise<Ticket[]> {
+    try {
+      const response = await apiClient.get<ApiResponse<Ticket[]>>('/tickets');
+      
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error getting all tickets:', error);
+      return [];
+    }
+  }
 }
 
 export const reservaService = new ReservaService();

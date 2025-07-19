@@ -91,8 +91,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const mappedSpots = estacionamientosData.map(est => DataMapper.estacionamientoToParkingSpot(est));
       setParkingSpots(mappedSpots);
 
-      // Cargar reservas del usuario
-      const reservasData = await reservaService.getReservasByUser(parseInt(currentUser.id));
+      // Cargar reservas según el rol del usuario
+      let reservasData;
+      if (currentUser.role === 'admin') {
+        // Admin obtiene todos los tickets del sistema
+        reservasData = await reservaService.getAllTickets();
+      } else {
+        // Otros usuarios obtienen solo sus tickets
+        reservasData = await reservaService.getReservasByUser(parseInt(currentUser.id));
+      }
+      
       const mappedReservations = reservasData.map(res => DataMapper.ticketToReservation(res));
       setReservations(mappedReservations);
     } catch (err) {
