@@ -1,6 +1,8 @@
 import { Reservation } from '../types';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+import { apiClient } from '@/lib/apiClient';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 export interface TicketAdmin {
   id: number;

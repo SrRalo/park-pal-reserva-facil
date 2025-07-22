@@ -1,0 +1,23 @@
+# Dockerfile simplificado para React + Vite
+FROM node:18-alpine
+
+# Configurar directorio de trabajo
+WORKDIR /app
+
+# Instalar dependencias del sistema
+RUN apk add --no-cache git
+
+# Copiar archivos de configuración
+COPY package*.json ./
+
+# Instalar dependencias de Node.js
+RUN npm ci
+
+# Copiar código fuente
+COPY . .
+
+# Exponer puerto
+EXPOSE 5173
+
+# Comando por defecto - forzar puerto 5173
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
